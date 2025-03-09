@@ -14,13 +14,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import zipfile
 
 # Judul Dashboard
 st.title("📊 Dashboard Analisis Data E-Commerce")
 
 st.subheader("Data Wrangling")
 st.write("Gathering Data")
-
+# Path ke file ZIP
+zip_path = "E-commerce-public-dataset/E-Commerce Public Dataset/geolocation_dataset.zip"
+# Buka ZIP dan baca CSV di dalamnya
+with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    # Pastikan untuk mengganti 'geolocation_dataset.csv' dengan nama file yang benar di dalam ZIP
+    with zip_ref.open('geolocation_dataset.csv') as file:
+        geolocation_df = pd.read_csv(file)
+        
 # Path ke File CSV
 customer_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/customers_dataset.csv")
 geolocation_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/"geolocation_dataset.zip", compression="zip")
