@@ -1,9 +1,1 @@
-git add "E-commerce-public-dataset/E-Commerce Public Dataset/customers_dataset.csv"
-git add "E-commerce-public-dataset/E-Commerce Public Dataset/geolocation_dataset.csv"
-git add "E-commerce-public-dataset/E-Commerce Public Dataset/order_reviews_dataset.csv"
-git add "E-commerce-public-dataset/E-Commerce Public Dataset/order_payments_dataset.csv"
-git add "E-commerce-public-dataset/E-Commerce Public Dataset/order_items_dataset.csv"
-git commit -m "Menambahkan dataset E-Commerce"
-git push origin main
-
 
