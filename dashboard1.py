@@ -23,7 +23,8 @@ st.write("Gathering Data")
 
 # Path ke File CSV
 customer_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/customers_dataset.csv")
-geolocation_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/geo.gz/geolocation_dataset.csv")
+geolocation_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/geolocation_dataset.csv")
+geolocation_df.to_csv("geolocation_dataset.zip", compression="zip", index=False")
 order_reviews_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_reviews_dataset.csv")
 order_payments_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_payments_dataset.csv")
 order_items_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_items_dataset.csv")
