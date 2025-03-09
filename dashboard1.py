@@ -23,11 +23,12 @@ st.subheader("Data Wrangling")
 st.write("Gathering Data")
 # Path ke file ZIP
 zip_path = "E-commerce-public-dataset/E-Commerce Public Dataset/geolocation_dataset.zip"
-# Buka ZIP dan baca CSV di dalamnya
+
 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-    # Pastikan untuk mengganti 'geolocation_dataset.csv' dengan nama file yang benar di dalam ZIP
     with zip_ref.open('geolocation_dataset.csv') as file:
         geolocation_df = pd.read_csv(file)
+
+geolocation_df = geolocation_df.drop(columns=['geolocation_lat', 'geolocation_lng'])
         
 # Path ke File CSV
 customer_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/customers_dataset.csv")
