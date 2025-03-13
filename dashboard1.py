@@ -22,19 +22,21 @@ st.title("📊 Dashboard Analisis Data E-Commerce")
 st.subheader("Data Wrangling")
 st.write("Gathering Data")
 
-# Load dataset dari GitHub
-@st.cache_data
-def load_data():
-    customers_df = pd.read_csv("https://raw.githubusercontent.com/nabilarisqi00/streamlit1/main/E-commerce-public-dataset/E-Commerce%20Public%20Dataset/customers_dataset.csv")
-    orders_df = pd.read_csv("https://raw.githubusercontent.com/nabilarisqi00/streamlit1/main/E-commerce-public-dataset/E-Commerce%20Public%20Dataset/orders_dataset.csv")
-    payments_df = pd.read_csv("https://raw.githubusercontent.com/nabilarisqi00/streamlit1/main/E-commerce-public-dataset/E-Commerce%20Public%20Dataset/order_payments_dataset.csv")
-    reviews_df = pd.read_csv("https://raw.githubusercontent.com/nabilarisqi00/streamlit1/main/E-commerce-public-dataset/E-Commerce%20Public%20Dataset/order_reviews_dataset.csv")
-    order_items_df = pd.read_csv("https://raw.githubusercontent.com/nabilarisqi00/streamlit1/main/E-commerce-public-dataset/E-Commerce%20Public%20Dataset/order_items_dataset.csv")
-    geolocation_df = pd.read_csv("https://raw.githubusercontent.com/nabilarisqi00/streamlit1/main/E-commerce-public-dataset/E-Commerce%20Public%20Dataset/geolocation_dataset.zip")
-    return customers_df, orders_df, payments_df, reviews_df, order_items_df, geolocation_df
+# Path ke file ZIP
+zip_path = "E-commerce-public-dataset/E-Commerce Public Dataset/geolocation_dataset.zip"
 
-customers_df, orders_df, payments_df, reviews_df, order_items_df, geolocation_df = load_data()
+with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    with zip_ref.open('geolocation_dataset.csv') as file:
+        geolocation_df = pd.read_csv(file)
 
+geolocation_df = geolocation_df.drop(columns=['geolocation_lat', 'geolocation_lng'])
+
+# Path ke File CSV
+customers_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/customers_dataset.csv")
+review_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_reviews_dataset.csv")
+payment_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_payments_dataset.csv")
+item_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_items_dataset.csv")
+order_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/orders_dataset.csv")
 # Informasi dasar dataset
 st.subheader("Informasi Dataset Pelanggan")
 st.write(customers_df.describe(include='all'))
@@ -57,15 +59,15 @@ plt.xticks(rotation=45)
 st.pyplot(fig)
 
 # Eksplorasi Data orders_df
-orders_df["order_purchase_timestamp"] = pd.to_datetime(orders_df["order_purchase_timestamp"])
-orders_df["order_delivered_customer_date"] = pd.to_datetime(orders_df["order_delivered_customer_date"])
-orders_df["order_estimated_delivery_date"] = pd.to_datetime(orders_df["order_estimated_delivery_date"])
-orders_df["delivery_time"] = (orders_df["order_delivered_customer_date"] - orders_df["order_purchase_timestamp"]).dt.days
+order_df["order_purchase_timestamp"] = pd.to_datetime(order_df["order_purchase_timestamp"])
+order_df["order_delivered_customer_date"] = pd.to_datetime(order_df["order_delivered_customer_date"])
+order_df["order_estimated_delivery_date"] = pd.to_datetime(order_df["order_estimated_delivery_date"])
+order_df["delivery_time"] = (order_df["order_delivered_customer_date"] - order_df["order_purchase_timestamp"]).dt.days
 st.subheader("Ringkasan Waktu Pengiriman")
-st.write(orders_df[["delivery_time"]].describe())
+st.write(order_df[["delivery_time"]].describe())
 
 # Gabungkan data orders_df dengan customers_df
-orders_customers_df = pd.merge(orders_df, customers_df, on='customer_id', how='left')
+orders_customers_df = pd.merge(order_df, customers_df, on='customer_id', how='left')
 
 # Agregasi jumlah order berdasarkan kota dan negara bagian
 order_state_counts = orders_customers_df.groupby("customer_state")["order_id"].nunique().reset_index()
@@ -79,8 +81,8 @@ plt.xticks(rotation=45)
 st.pyplot(fig)
 
 # Eksplorasi hubungan ulasan pelanggan terhadap metode pembayaran
-orders_payments_reviews_df = pd.merge(orders_df, payments_df, on='order_id', how='left')
-orders_payments_reviews_df = pd.merge(orders_payments_reviews_df, reviews_df, on='order_id', how='left')
+orders_payments_reviews_df = pd.merge(order_df, payment_df, on='order_id', how='left')
+orders_payments_reviews_df = pd.merge(orders_payments_reviews_df, review_df, on='order_id', how='left')
 
 # Agregasi rata-rata skor ulasan berdasarkan metode pembayaran
 review_payment_agg = orders_payments_reviews_df.groupby("payment_type").agg({"review_score": "mean", "payment_value": "mean"}).reset_index()
