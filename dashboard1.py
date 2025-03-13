@@ -16,7 +16,7 @@ import seaborn as sns
 import numpy as np
 import zipfile
 
-# Judul Dashboard
+st.set_page_config(page_title="Dashboard E-Commerce", layout="wide")
 st.title("📊 Dashboard Analisis Data E-Commerce")
 
 st.subheader("Data Wrangling")
@@ -37,68 +37,59 @@ review_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/ord
 payment_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_payments_dataset.csv")
 item_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/order_items_dataset.csv")
 order_df = pd.read_csv("E-commerce-public-dataset/E-Commerce Public Dataset/orders_dataset.csv")
-# Informasi dasar dataset
-st.subheader("Informasi Dataset Pelanggan")
-st.write(customers_df.describe(include='all'))
 
-# Agregasi jumlah pelanggan berdasarkan negara bagian
+
+# Sidebar untuk filter interaktif
+st.sidebar.header("Filter Data")
+selected_state = st.sidebar.selectbox("Pilih Negara Bagian", customers_df["customer_state"].unique())
+
+df_filtered_customers = customers_df[customers_df["customer_state"] == selected_state]
+df_filtered_orders = order_df.merge(df_filtered_customers, on='customer_id', how='inner')
+df_filtered_payments = payment_df.merge(df_filtered_orders, on='order_id', how='inner')
+df_filtered_reviews = review_df.merge(df_filtered_orders, on='order_id', how='inner')
+
+st.sidebar.write(f"Jumlah pelanggan di {selected_state}: {df_filtered_customers.shape[0]}")
+
+# Distribusi jumlah pelanggan berdasarkan negara bagian
+st.subheader("Distribusi Jumlah Pelanggan Berdasarkan Negara Bagian")
 customer_state_counts = customers_df.groupby("customer_state")["customer_id"].nunique().reset_index()
 customer_state_counts = customer_state_counts.sort_values(by='customer_id', ascending=False)
-st.subheader("Distribusi Jumlah Pelanggan Berdasarkan Negara Bagian")
-st.dataframe(customer_state_counts.head(10))
-
-# Pilihan interaktif untuk eksplorasi data pelanggan berdasarkan negara bagian
-selected_state = st.selectbox("Pilih Negara Bagian untuk Dieksplorasi", customer_state_counts["customer_state"].unique())
-filtered_customers = customers_df[customers_df["customer_state"] == selected_state]
-st.write(f"Jumlah pelanggan di {selected_state}: {filtered_customers.shape[0]}")
-
-# Visualisasi distribusi pelanggan
 fig, ax = plt.subplots(figsize=(12, 6))
 sns.barplot(data=customer_state_counts, x='customer_state', y='customer_id', palette='coolwarm', ax=ax)
 plt.xticks(rotation=45)
 st.pyplot(fig)
 
-# Eksplorasi Data orders_df
+# Eksplorasi waktu pengiriman
 order_df["order_purchase_timestamp"] = pd.to_datetime(order_df["order_purchase_timestamp"])
 order_df["order_delivered_customer_date"] = pd.to_datetime(order_df["order_delivered_customer_date"])
-order_df["order_estimated_delivery_date"] = pd.to_datetime(order_df["order_estimated_delivery_date"])
-order_df["delivery_time"] = (order_df["order_delivered_customer_date"] - order_df["order_purchase_timestamp"]).dt.days
-st.subheader("Ringkasan Waktu Pengiriman")
-st.write(order_df[["delivery_time"]].describe())
 
-# Gabungkan data orders_df dengan customers_df
-orders_customers_df = pd.merge(order_df, customers_df, on='customer_id', how='left')
+df_filtered_orders["order_purchase_timestamp"] = pd.to_datetime(df_filtered_orders["order_purchase_timestamp"], errors='coerce')
+df_filtered_orders["order_delivered_customer_date"] = pd.to_datetime(df_filtered_orders["order_delivered_customer_date"], errors='coerce')
 
-# Agregasi jumlah order berdasarkan kota dan negara bagian
-order_state_counts = orders_customers_df.groupby("customer_state")["order_id"].nunique().reset_index()
-st.subheader("Jumlah Order Berdasarkan Negara Bagian")
-st.dataframe(order_state_counts)
+df_filtered_orders["delivery_time"] = (df_filtered_orders["order_delivered_customer_date"] - df_filtered_orders["order_purchase_timestamp"]).dt.days
 
-# Visualisasi jumlah order per negara bagian
-fig, ax = plt.subplots(figsize=(12, 6))
-sns.barplot(data=order_state_counts, x='customer_state', y='order_id', palette='viridis', ax=ax)
+st.subheader("Ringkasan Waktu Pengiriman di " + selected_state)
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.histplot(df_filtered_orders["delivery_time"], bins=20, kde=True, color='blue', ax=ax)
+ax.set_title("Distribusi Waktu Pengiriman di " + selected_state)
+st.pyplot(fig)
+
+# Hubungan metode pembayaran dengan ulasan
+df_filtered_review_payment = df_filtered_payments.merge(df_filtered_reviews, on='order_id', how='left')
+review_payment_agg = df_filtered_review_payment.groupby("payment_type").agg({"review_score": "mean", "payment_value": "mean"}).reset_index()
+
+st.subheader("Rata-rata Skor Ulasan Berdasarkan Metode Pembayaran di " + selected_state)
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.barplot(data=review_payment_agg, x="payment_type", y="review_score", palette='viridis', ax=ax)
 plt.xticks(rotation=45)
 st.pyplot(fig)
 
-# Eksplorasi hubungan ulasan pelanggan terhadap metode pembayaran
-orders_payments_reviews_df = pd.merge(order_df, payment_df, on='order_id', how='left')
-orders_payments_reviews_df = pd.merge(orders_payments_reviews_df, review_df, on='order_id', how='left')
-
-# Agregasi rata-rata skor ulasan berdasarkan metode pembayaran
-review_payment_agg = orders_payments_reviews_df.groupby("payment_type").agg({"review_score": "mean", "payment_value": "mean"}).reset_index()
-st.subheader("Rata-rata Skor Ulasan Berdasarkan Metode Pembayaran")
-st.dataframe(review_payment_agg)
-
-# Visualisasi hubungan metode pembayaran dengan skor ulasan
-fig, ax = plt.subplots(figsize=(12, 6))
-sns.barplot(data=review_payment_agg, x='payment_type', y='review_score', palette='coolwarm', ax=ax)
-plt.xticks(rotation=45)
+# Scatter plot hubungan jumlah pembayaran dengan skor ulasan
+st.subheader("Hubungan Jumlah Pembayaran dengan Skor Ulasan di " + selected_state)
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.scatterplot(data=df_filtered_review_payment, x='payment_value', y='review_score', alpha=0.5, color='purple', ax=ax)
+ax.set_title("Scatter Plot: Pembayaran vs Ulasan di " + selected_state)
 st.pyplot(fig)
 
-# Visualisasi hubungan jumlah pembayaran dengan skor ulasan
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.scatterplot(data=orders_payments_reviews_df, x='payment_value', y='review_score', alpha=0.5, ax=ax)
-st.pyplot(fig)
-
-st.subheader("Ringkasan Statistik Pembayaran dan Ulasan")
-st.write(orders_payments_reviews_df[['payment_value', 'review_score']].describe())
+st.subheader("Ringkasan Statistik Pembayaran dan Ulasan di " + selected_state)
+st.write(df_filtered_review_payment[['payment_value', 'review_score']].describe())
