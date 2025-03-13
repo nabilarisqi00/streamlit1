@@ -10,6 +10,6 @@ pip install
 
 ## Run Streamlit app
 ```
-streamlit run dashboard.py
+streamlit run dashboard1.py
 ```
 
