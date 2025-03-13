@@ -1,3 +1,3 @@
-https://app1-kbgzhkbpjrv8ypaztejlsm.streamlit.app/
+https://app1-9rqekiyg6xmpbmt3ygcqsw.streamlit.app/
 
 https://github.com/nabilarisqi00/streamlit1
